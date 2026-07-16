@@ -51,23 +51,27 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
 // CORS Configuration
+// CORS Configuration
 const allowedOrigins = [
-  process.env.CLIENT_URL, // your deployed frontend URL, e.g. https://edustream-frontend-kappa.vercel.app
-  "http://localhost:5173", // local dev
-].filter(Boolean);
+  process.env.CLIENT_URL, // your deployed frontend, e.g. https://edustream-frontend-fawn.vercel.app
+  "http://localhost:5173", // local dev (Vite default port)
+]
+  .filter(Boolean)
+  .map((url) => url.replace(/\/$/, "")); // strip any trailing slash, just in case
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+      // allow requests with no origin (curl, Postman, server-to-server, mobile apps)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS blocked for origin: ${origin}`));
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(null, false); // deny gracefully — do NOT throw an Error here
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
