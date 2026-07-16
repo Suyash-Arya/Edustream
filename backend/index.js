@@ -51,13 +51,22 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
 // CORS Configuration
+const allowedOrigins = [
+  process.env.CLIENT_URL, // your deployed frontend URL, e.g. https://edustream-frontend-kappa.vercel.app
+  "http://localhost:5173", // local dev
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      "https://edustream-frontend-kappa.vercel.app", // Put your EXACT frontend URL here from your screenshots
-      "http://localhost:5173", // Keeps it working on your local computer too
-    ],
-    credentials: true, // Needed if you are using cookies/sessions for sign-in
+    origin: (origin, callback) => {
+      // allow requests with no origin (e.g. curl, mobile apps, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
