@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Heart, LogOut, Lock, Upload } from "lucide-react";
+import { BookOpen, Heart, LogOut, Lock, Upload, X } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useNotification } from "../hooks/useNotification";
+import { authAPI } from "../api/authAPI";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -19,6 +20,16 @@ export default function Profile() {
     bio: user?.bio || "",
     avatar: null,
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const readStoredCourses = (key) => {
     if (typeof window === "undefined") return [];
@@ -97,6 +108,69 @@ export default function Profile() {
   const handleSignout = async () => {
     await signout();
     navigate("/");
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (passwordForm.newPassword.length < 8) {
+      error("New password must be at least 8 characters long");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      error("New password and confirmation do not match");
+      return;
+    }
+    if (passwordForm.newPassword === passwordForm.currentPassword) {
+      error("New password must be different from current password");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authAPI.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      success("Password changed successfully!");
+      setShowPasswordModal(false);
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to change password",
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      error('Please type "DELETE" to confirm');
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      await authAPI.deleteAccount();
+      success("Account deleted successfully");
+      await signout();
+      navigate("/");
+    } catch (err) {
+      error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to delete account",
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -379,7 +453,10 @@ export default function Profile() {
               <h3 className="text-2xl font-bold mb-6">Account Settings</h3>
 
               <div className="space-y-4">
-                <button className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-indigo-600 hover:bg-indigo-50 transition flex items-center justify-between">
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-indigo-600 hover:bg-indigo-50 transition flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <Lock className="w-5 h-5 text-gray-400" />
                     <div>
@@ -392,7 +469,10 @@ export default function Profile() {
                   <span className="text-indigo-600">&gt;</span>
                 </button>
 
-                <button className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition flex items-center justify-between">
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-red-600 hover:bg-red-50 transition flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <LogOut className="w-5 h-5 text-gray-400" />
                     <div>
@@ -444,6 +524,131 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+            <button
+              onClick={() => {
+                setShowPasswordModal(false);
+                setPasswordForm({
+                  currentPassword: "",
+                  newPassword: "",
+                  confirmPassword: "",
+                });
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold mb-4">Change Password</h3>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.currentPassword}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({
+                      ...prev,
+                      currentPassword: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({
+                      ...prev,
+                      newPassword: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Must be at least 8 characters
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({
+                      ...prev,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-60"
+              >
+                {passwordLoading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+            <button
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmText("");
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold mb-2 text-red-600">
+              Delete Account
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This action is permanent and cannot be undone. All your data,
+              enrolled courses, and progress will be lost.
+            </p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type <span className="font-bold">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-4"
+              placeholder="DELETE"
+            />
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteLoading || deleteConfirmText !== "DELETE"}
+              className="w-full bg-red-600 text-white font-semibold py-2.5 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+            >
+              {deleteLoading ? "Deleting..." : "Permanently Delete Account"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
