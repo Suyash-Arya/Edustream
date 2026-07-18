@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f4f7f5;
+  color: #16211d;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+code {
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* Visible keyboard focus everywhere, respecting the design system */
+:focus-visible {
+  outline: 2px solid #dc9f18;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #eef4f2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a3c4bc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #719f95;
+}
+
+/* Custom Components */
+.btn-primary {
+  @apply px-5 py-2.5 bg-ink-600 text-white rounded-lg font-semibold hover:bg-ink-700 active:bg-ink-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
+}
+
+.btn-secondary {
+  @apply px-5 py-2.5 bg-white text-ink-600 border border-ink-200 rounded-lg font-semibold hover:bg-ink-50 hover:border-ink-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-accent {
+  @apply px-5 py-2.5 bg-gold-400 text-ink-800 rounded-lg font-semibold hover:bg-gold-300 active:bg-gold-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm;
+}
+
+.btn-danger {
+  @apply px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input-field {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-500 focus:border-transparent transition-shadow;
+}
+
+.auth-input-with-icon {
+  padding-left: 3rem !important;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300;
+}
+
+.container-main {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Ruled-notebook texture — used sparingly as a signature accent, never
+   as a full-page background, to keep it feeling intentional. */
+.ruled-paper {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 27px,
+    rgba(18, 56, 50, 0.09) 28px
+  );
+}
+
+/* Highlighter-marker underline — the site's signature detail. Wrap the
+   emphasized word(s) in <span class="marker-highlight"> inside a heading. */
+.marker-highlight {
+  position: relative;
+  white-space: nowrap;
+}
+
+.marker-highlight::after {
+  content: "";
+  position: absolute;
+  left: -0.15em;
+  right: -0.15em;
+  bottom: 0.05em;
+  height: 0.34em;
+  background: #f0c752;
+  z-index: -1;
+  transform-origin: left;
+  animation: marker 0.7s 0.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+header a,
+header button {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}

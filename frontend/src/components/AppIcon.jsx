@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Play } from "lucide-react";
 
 const ICONS = {
   mail: "✉️",
@@ -43,6 +43,16 @@ export default function AppIcon({ name = "user", className = "" }) {
     return (
       <EyeOff
         className={`inline-flex items-center justify-center ${className}`}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  if (name === "play") {
+    return (
+      <Play
+        className={`inline-flex items-center justify-center ${className}`}
+        fill="currentColor"
         aria-hidden="true"
       />
     );

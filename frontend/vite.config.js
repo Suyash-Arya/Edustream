@@ -13,4 +13,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split large, rarely-changing vendor libraries into their own
+        // cached chunks, separate from app code that changes often.
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react', 'react-toastify'],
+        },
+      },
+    },
+  },
 })
