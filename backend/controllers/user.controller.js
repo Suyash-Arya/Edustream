@@ -1,7 +1,7 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
-import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
+import { deleteMediaFromCloudinary, uploadMedia, bufferToDataURI } from "../utils/cloudinary.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { AppError } from "../middleware/error.middleware.js";
 import crypto from "crypto";
@@ -138,8 +138,11 @@ export const updateUserProfile = catchAsync(async (req, res) => {
 
   // Handle avatar upload if provided
   if (req.file) {
-    const avatarResult = await uploadMedia(req.file.path);
-    updateData.avatar = avatarResult?.secure_url || req.file.path;
+    const avatarResult = await uploadMedia(bufferToDataURI(req.file));
+    if (!avatarResult?.secure_url) {
+      throw new AppError("Error uploading avatar image", 500);
+    }
+    updateData.avatar = avatarResult.secure_url;
 
     // Delete old avatar if it's not the default
     const user = await User.findById(req.id);

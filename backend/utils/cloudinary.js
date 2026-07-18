@@ -8,6 +8,14 @@ cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
 });
 
+// multer.memoryStorage() gives us req.file.buffer (not req.file.path).
+// Cloudinary's uploader.upload() needs a file path, URL, or data URI —
+// so we convert the in-memory buffer into a base64 data URI here.
+export const bufferToDataURI = (file) => {
+  const b64 = file.buffer.toString("base64");
+  return `data:${file.mimetype};base64,${b64}`;
+};
+
 export const uploadMedia = async (file) => {
   try {
     const uploadResponse = await cloudinary.uploader.upload(file, {

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Course } from "../models/course.model.js";
 import { Lecture } from "../models/lecture.model.js";
 import { User } from "../models/user.model.js";
-import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
+import { deleteMediaFromCloudinary, uploadMedia, bufferToDataURI } from "../utils/cloudinary.js";
 import { catchAsync } from "../middleware/error.middleware.js";
 import { AppError } from "../middleware/error.middleware.js";
 
@@ -81,8 +81,11 @@ export const createNewCourse = catchAsync(async (req, res) => {
   // Handle thumbnail upload
   let thumbnail;
   if (req.file) {
-    const result = await uploadMedia(req.file.path);
-    thumbnail = result?.secure_url || req.file.path;
+    const result = await uploadMedia(bufferToDataURI(req.file));
+    if (!result?.secure_url) {
+      throw new AppError("Error uploading course thumbnail", 500);
+    }
+    thumbnail = result.secure_url;
   } else {
     throw new AppError("Course thumbnail is required", 400);
   }
@@ -278,8 +281,11 @@ export const updateCourseDetails = catchAsync(async (req, res) => {
     if (course.thumbnail) {
       await deleteMediaFromCloudinary(course.thumbnail);
     }
-    const result = await uploadMedia(req.file.path);
-    thumbnail = result?.secure_url || req.file.path;
+    const result = await uploadMedia(bufferToDataURI(req.file));
+    if (!result?.secure_url) {
+      throw new AppError("Error uploading course thumbnail", 500);
+    }
+    thumbnail = result.secure_url;
   }
 
   const updatedCourse = await Course.findByIdAndUpdate(
@@ -388,8 +394,8 @@ export const addLectureToCourse = catchAsync(async (req, res) => {
   }
 
   // Upload video to cloudinary
-  const result = await uploadMedia(req.file.path);
-  if (!result) {
+  const result = await uploadMedia(bufferToDataURI(req.file));
+  if (!result?.secure_url) {
     throw new AppError("Error uploading video", 500);
   }
 
@@ -399,8 +405,8 @@ export const addLectureToCourse = catchAsync(async (req, res) => {
     description,
     isPreview,
     order: course.lectures.length + 1,
-    videoUrl: result?.secure_url || req.file.path,
-    publicId: result?.public_id || req.file.path,
+    videoUrl: result.secure_url,
+    publicId: result.public_id,
     duration: result?.duration || 0, // Cloudinary provides duration for video files
   });
 
